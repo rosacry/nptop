@@ -1,0 +1,16 @@
+Proven Limitations:
+Intrinsic Limits (i.e. halting)
+Information-Theoretical Limits (pieces of structure may not directly imply structure)
+
+Conjectures:
+  p v np - solving problem in same time complexity as verifying it
+  ETH (Exponential Time Hypothesis) - 3-SAT cannot be solved in sub-exp time
+  UGC (Unique Games Conjecture) - NP hard to det satisfiability of certain types of constraint statisfaction problems, where we assume contrains are promised to be satisfiable
+    
+Main conjecture:
+  If any np complete were to be proven, there exists an algorithm that is in the same time complexity as verifying it
+
+
+What I want to do:
+
+I want to make a decompiler that uses ai to preduct high-level code from assembly instructures, connects everything back together in human-readable format, and creates formulas/algorithms to efficiently solve harder decompiler problems. In terms of training the ai, I want to make an additional program that anyone can download, that uses any peers individual computing power to train the ai better.

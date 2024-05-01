@@ -1,0 +1,17 @@
+Make sure python3.10-env is installed (if same error look at gpt prompts)
+
+Activate:
+activate env/
+
+Deactivate (if you're working on multiple repositories that use environments:
+deactivate
+
+Installing dependencies:
+add_dependencies.sh package_name
+
+Creating a virtual environment:
+python3 -m venv env
+activate env/
+
+Intalling dependencies:
+pip install -r requirements.txt

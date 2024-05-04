@@ -1,0 +1,23 @@
+modify the train.py file such that it trains all of the data within the chrig/source_code_files folder
+along with its corresponding asm_files located in chrig/asm_files (both in google cloud and "chrig" being the bucket name)
+
+
+I want to make the train.py into a program that anyone can use to help train the vast and large amount of data. 
+
+modify the train.py file such that once the model gets trained the source code with its associated
+asm files, it deletes both from the google cloud bucket
+
+
+@workspace I want to make the #file:train.py file into a program that anyone can use to help train the model given the vast and large amount of data. I want to make sure if a peer decides to stop/abort or pause training the model, another peer can pick up where they left off. I'd also like the UI and design to be appealing in the terminal.
+
+
+create a new file that combines both the execution of #file:download_repo.py and #file:compile_to_asm.py 
+
+
+modify download_repo.py such that if it already downloaded 0-100 most popular open sourced repositories, it will then download repositories up to 200, then 300 and so on.
+
+
+@workspace if i decide to put #file:fetch_code.py file (the merge file between #file:download_repo.py and #file:compile_to_asm.py), #file:data.py file, #file:main.py file, and the #file:train.py file, (which all of these files are in the root of the project) into a folder called exec/ . how can i make sure all of the paths maintain reltivity if i do this?
+
+
+@workspace I want you to create a file that merges both #file:download_repo.py file and #file:compile_to_asm.py file to its absolute entirety such that once a repo is downloaded, it gets compiled. Make sure the UI and appealing design gets merged in an organized fashion as well.

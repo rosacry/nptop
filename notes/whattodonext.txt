@@ -5,3 +5,5 @@
 @workspace I want you to create a file that merges both #file:download_repo.py file and #file:compile_to_asm.py file to its absolute entirety such that once a repo is downloaded, it gets compiled. Make sure the UI and appealing design gets merged in an organized fashion as well.
 
 modify google cloud such that anyone has access to train, remove, and add data.
+
+add readme to repo again

@@ -7,3 +7,6 @@
 modify google cloud such that anyone has access to train, remove, and add data.
 
 add readme to repo again
+
+
+since I made the download_repo.py file such that it will download a maximum of 100 repositories each time it is run. It will skip any repositories that have already been downloaded, when the train.py gets executed and it finishes training a source_code and its corresponding asm_file, it gets deleted, so then, it becomes a paradox if I decide to run download_repo.py (for the second time) after running train.py. What should i do to fix this?

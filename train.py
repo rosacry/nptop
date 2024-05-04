@@ -44,11 +44,6 @@ def translate_sequence(sequence, model):
 # ... use the translate_sequence function ...
 
 
-from tqdm import tqdm
-from google.cloud import storage
-
-from tqdm.rich import tqdm_rich
-
 def train_model(resume=False):
     # Initialize the distributed environment
     dist.init_process_group(backend='nccl')

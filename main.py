@@ -3,19 +3,31 @@ from models.decoder import Decoder
 from models.seq2seq import Seq2Seq
 from train import translate_sequence, train_model
 from utils.download_repo import download_repo
+from tqdm.rich import tqdm_rich
+from rich.console import Console
+from rich.progress import Progress
 import torch
 import os
 
-def build_vocab(code):
-    # Tokenize the code
-    tokens = code.split()
+console = Console()
+progress = Progress(console=console)
 
-    # Create a set of unique tokens
-    vocab = set(tokens)
+def build_vocab(code):
+    with progress.start_task(total=len(code.split())) as task:
+        console.print("Building vocabulary...", style="bold magenta")
+        # Tokenize the code
+        tokens = code.split()
+
+        # Create a set of unique tokens
+        vocab = set()
+        for token in tokens:
+            vocab.add(token)
+            progress.update(task, advance=1)
 
     return vocab
 
 def load_model():
+    console.print("Loading model...", style="bold magenta")
     # Load your assembly and high-level code
     assembly_code = open('path/to/assembly_code.asm').read()
     high_level_code = open('path/to/high_level_code.py').read()
@@ -49,6 +61,7 @@ def load_model():
     return model
 
 def main():
+    console.print("Starting main function...", style="bold magenta")
     # Download open-source code
     repo_url = 'https://github.com/user/repo.git'  # Replace with the actual repo URL
     download_repo(repo_url)
@@ -63,7 +76,8 @@ def main():
     sequence = sequence.to(model.device)
     decompiled_code = translate_sequence(sequence, model)
 
-    print(decompiled_code)
+    console.print("Decompiled code:", style="bold green")
+    console.print(decompiled_code)
 
 if __name__ == "__main__":
     main()

@@ -3,8 +3,9 @@ import os
 import subprocess
 from google.cloud import storage
 from tqdm.rich import tqdm_rich
+from pygments.lexers import guess_lexer_for_filename
 
-def compile_to_asm(lang, source_file_path, asm_file_path):
+def compile_to_asm(source_file_path, asm_file_path):
     # Initialize a storage client
     storage_client = storage.Client()
     # Get the bucket
@@ -16,9 +17,13 @@ def compile_to_asm(lang, source_file_path, asm_file_path):
     # Save the source code to a temporary file
     with open('temp_source_file', 'w') as file:
         file.write(source_code)
+    # Determine the language of the source code
+    with open('temp_source_file', 'r') as file:
+        code = file.read()
+    lexer = guess_lexer_for_filename(source_file_path, code)
+    lang = lexer.name.lower()
     # Compile the source code to assembly
-    langs = ['c', 'cpp', 'java', 'rust', 'csharp', 'python']
-    for lang in tqdm_rich(langs, desc='Compiling to Assembly', unit='lang'):
+    with tqdm_rich(total=1, desc='Compiling to Assembly', unit='file') as pbar:
         if lang == 'c':
             subprocess.run(["gcc", "-S", "-o", 'temp_asm_file', 'temp_source_file'], check=True)
         elif lang == 'cpp':
@@ -42,6 +47,7 @@ def compile_to_asm(lang, source_file_path, asm_file_path):
                 file.write(str(bytecode.dis()))
         else:
             raise ValueError(f"Unsupported language: {lang}")
+        pbar.update()
     # Read the assembly code from the temporary file
     with open('temp_asm_file', 'r') as file:
         asm_code = file.read()

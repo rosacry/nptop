@@ -16,49 +16,62 @@ logging.basicConfig(level=logging.INFO)
 # Set the GOOGLE_APPLICATION_CREDENTIALS environment variable
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "adept-stage-422221-u0-23df2eb5efb0.json")
 
+def is_repo_downloaded(user, repo, storage_client, bucket_name):
+    bucket = storage_client.get_bucket(bucket_name)
+    blobs = bucket.list_blobs(prefix=f'source_code_files/{user}/{repo}')
+    return any(blobs)
+
 def download_repo(user, repo, token, storage_client, bucket_name):
-    try:
-        # Fetch repository information
-        repo_info_url = f"https://api.github.com/repos/{user}/{repo}"
-        headers = {'Authorization': f'token {token}'}
-        repo_info_r = requests.get(repo_info_url, headers=headers)
-        repo_info = repo_info_r.json()
-        # Get the default branch of the repository
-        default_branch = repo_info.get('default_branch', 'master')
-        # Download the repository
-        url = f"https://api.github.com/repos/{user}/{repo}/zipball/{default_branch}"
-        r = requests.get(url, headers=headers)
-        
-        if r.status_code == 404:
-            logging.error(f"Repository {user}/{repo} does not exist or the {default_branch} branch is not available.")
-            return
-        if r.status_code == 403:
-            logging.error(f"Rate limit exceeded when trying to download {user}/{repo}. Pausing for 1 hour.")
-            time.sleep(3600)  # Pause for 1 hour
-            return
-        with open('repo.zip', 'wb') as f:
-            f.write(r.content)
-        
-        with zipfile.ZipFile('repo.zip', 'r') as zip_ref:
-            zip_ref.extractall('data/source_code_files')
-        
-        # Upload the repository to Google Cloud Storage
-        bucket = storage_client.get_bucket(bucket_name)
-        for root, dirs, files in os.walk('data/source_code_files'):
-            for file in files:
-                local_file = os.path.join(root, file)
-                remote_file = local_file.replace('data/source_code_files', f'{bucket_name}/source_code_files/{user}/{repo}')
-                blob = bucket.blob(remote_file)
-                blob.upload_from_filename(local_file)
-        
-        logging.info(f"Successfully downloaded and uploaded {user}/{repo}.")
-    except Exception as e:
-        logging.error(f"An error occurred when processing {user}/{repo}: {e}")
-    finally:
-        if os.path.exists('repo.zip'):
-            os.remove('repo.zip')
-        if os.path.exists('data/source_code_files'):
-            shutil.rmtree('data/source_code_files')
+    # Check if the repository has already been downloaded
+    if is_repo_downloaded(user, repo, storage_client, bucket_name):
+        logging.info(f"Repository {user}/{repo} has already been downloaded.")
+        return
+    retry_count = 0
+    while retry_count < 5:  # Maximum of 5 retries
+        try:
+            # Fetch repository information
+            repo_info_url = f"https://api.github.com/repos/{user}/{repo}"
+            headers = {'Authorization': f'token {token}'}
+            repo_info_r = requests.get(repo_info_url, headers=headers)
+            repo_info = repo_info_r.json()
+            # Get the default branch of the repository
+            default_branch = repo_info.get('default_branch', 'master')
+            # Download the repository
+            url = f"https://api.github.com/repos/{user}/{repo}/zipball/{default_branch}"
+            r = requests.get(url, headers=headers)
+            
+            if r.status_code == 404:
+                logging.error(f"Repository {user}/{repo} does not exist or the {default_branch} branch is not available.")
+                return
+            if r.status_code == 403:
+                logging.error(f"Rate limit exceeded when trying to download {user}/{repo}. Retrying in {2 ** retry_count} seconds.")
+                time.sleep(2 ** retry_count)  # Exponential backoff
+                retry_count += 1
+                continue
+            with open('repo.zip', 'wb') as f:
+                f.write(r.content)
+            
+            with zipfile.ZipFile('repo.zip', 'r') as zip_ref:
+                zip_ref.extractall('data/source_code_files')
+            
+            # Upload the repository to Google Cloud Storage
+            bucket = storage_client.get_bucket(bucket_name)
+            for root, dirs, files in os.walk('data/source_code_files'):
+                for file in files:
+                    local_file = os.path.join(root, file)
+                    remote_file = local_file.replace('data/source_code_files', f'{bucket_name}/source_code_files/{user}/{repo}')
+                    blob = bucket.blob(remote_file)
+                    blob.upload_from_filename(local_file)
+            
+            logging.info(f"Successfully downloaded and uploaded {user}/{repo}.")
+            break  # Break the retry loop if download is successful
+        except Exception as e:
+            logging.error(f"An error occurred when processing {user}/{repo}: {e}")
+        finally:
+            if os.path.exists('repo.zip'):
+                os.remove('repo.zip')
+            if os.path.exists('data/source_code_files'):
+                shutil.rmtree('data/source_code_files')
 
 
 def get_popular_repos(token, num_repos=100):
@@ -80,5 +93,9 @@ bucket_name = 'chrig'
 repos = get_popular_repos(token)
 
 # Download each repository
+downloaded_count = 0
 for user, repo in tqdm_rich(repos, desc='Downloading Repositories', unit='repo'):
     download_repo(user, repo, token, storage_client, bucket_name)
+    downloaded_count += 1
+    if downloaded_count >= 100:
+        break
